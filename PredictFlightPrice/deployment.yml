@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flight-price-pred
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flight-price-pred
+  template:
+    metadata:
+      labels:
+        app: flight-price-pred
+    spec:
+      containers:
+      - name: flight-price-pred
+        image: mamoor/flight-price-pred:1.0
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8000
+        env:
+        - name: FLASK_APP
+          value: "app"

@@ -1,0 +1,7 @@
+Airflow/logs/
+logs/
+*.log
+__pycache__/
+*.pkl
+.env
+venv/
