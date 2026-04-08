@@ -1,0 +1,15 @@
+Airflow/logs
+Airflow/logs/**
+.dockerignore
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.ipynb
+.env
+.venv
+.idea
+.vscode
