@@ -275,4 +275,32 @@ def index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=8000)
+    import sys
+    
+    # Support both HTTP and HTTPS
+    # Use HTTPS by default since we have SSL certificates available
+    
+    # Check if certificates exist
+    import os as _os
+    cert_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'cert.pem')
+    key_path = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), 'key.pem')
+    
+    if _os.path.exists(cert_path) and _os.path.exists(key_path):
+        # Use absolute paths for SSL context
+        ssl_context = (cert_path, key_path)
+        print("\n" + "="*60)
+        print("🔒 SECURE HTTPS MODE ENABLED")
+        print("="*60)
+        print("✓ SSL/TLS Certificates Loaded")
+        print("✓ Server: Running on https://0.0.0.0:8888")
+        print("✓ Local Access: https://localhost:8888")
+        print("="*60 + "\n")
+        app.run(debug=True, host="0.0.0.0", port=8888, ssl_context=ssl_context)
+    else:
+        print("\n" + "="*60)
+        print("⚠️  WARNING: SSL CERTIFICATES NOT FOUND")
+        print("="*60)
+        print("Falling back to HTTP mode (unencrypted)")
+        print("Server: Running on http://0.0.0.0:8888")
+        print("="*60 + "\n")
+        app.run(debug=True, host="0.0.0.0", port=8888)
