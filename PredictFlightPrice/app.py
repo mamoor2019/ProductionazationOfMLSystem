@@ -185,6 +185,49 @@ def predict():
         </form>
         <p id="prediction"></p>
     </div>
+    <script>
+        const form = document.querySelector('form');
+        const predictionEl = document.getElementById('prediction');
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            predictionEl.textContent = 'Predicting...';
+
+            const formData = new FormData(form);
+            const payload = new URLSearchParams(formData).toString();
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: payload,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Prediction request failed:', response.status, errorText);
+                    predictionEl.textContent = 'Prediction failed. Server error. Please refresh and retry.';
+                    return;
+                }
+
+                const data = await response.json();
+                predictionEl.textContent = 'Predicted Price: ₹' + data.prediction;
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    predictionEl.textContent = 'Prediction timed out. Please try again.';
+                } else {
+                    predictionEl.textContent = 'Prediction failed. Please try again.';
+                }
+                console.error('Fetch error:', error);
+            }
+        });
+    </script>
 </body>
 </html>
 
@@ -196,82 +239,75 @@ def predict():
 @app.route('/predict', methods=['POST'])
 def index():
     if request.method == 'POST':
-        load_models()  # Load models when needed
-        
-        # Get input data from the form
-        boarding = str(request.form.get('from'))
-        destination = str(request.form.get('Destination'))
-        selected_flight_class = str(request.form.get('flightType'))
-        selected_agency = str(request.form.get('agency'))
-        week_no = int(request.form.get('week_no'))
-        week_day = int(request.form.get('week_day'))
-        day = int(request.form.get('day'))
+        try:
+            load_models()  # Load models when needed
+            
+            # Get input data from the form
+            boarding = str(request.form.get('from', '')).strip()
+            destination = str(request.form.get('Destination', '')).strip()
+            selected_flight_class = str(request.form.get('flightType', '')).strip()
+            selected_agency = str(request.form.get('agency', '')).strip()
+            week_no = int(request.form.get('week_no', 0))
+            week_day = int(request.form.get('week_day', 0))
+            day = int(request.form.get('day', 0))
 
-        boarding = 'from_' + boarding
-        boarding_city_list = ['from_Florianopolis (SC)',
-                              'from_Sao_Paulo (SP)',
-                              'from_Salvador (BH)',
-                              'from_Brasilia (DF)',
-                              'from_Rio_de_Janeiro (RJ)',
-                              'from_Campo_Grande (MS)',
-                              'from_Aracaju (SE)',
-                              'from_Natal (RN)',
-                              'from_Recife (PE)']
+            boarding = 'from_' + boarding
+            boarding_city_list = ['from_Florianopolis (SC)',
+                                  'from_Sao_Paulo (SP)',
+                                  'from_Salvador (BH)',
+                                  'from_Brasilia (DF)',
+                                  'from_Rio_de_Janeiro (RJ)',
+                                  'from_Campo_Grande (MS)',
+                                  'from_Aracaju (SE)',
+                                  'from_Natal (RN)',
+                                  'from_Recife (PE)']
 
-        destination = 'destination_' + destination
-        destination_city_list = ['destination_Florianopolis (SC)',
-                                 'destination_Sao_Paulo (SP)',
-                                 'destination_Salvador (BH)',
-                                 'destination_Brasilia (DF)',
-                                 'destination_Rio_de_Janeiro (RJ)',
-                                 'destination_Campo_Grande (MS)',
-                                 'destination_Aracaju (SE)',
-                                 'destination_Natal (RN)',
-                                 'destination_Recife (PE)']
+            destination = 'destination_' + destination
+            destination_city_list = ['destination_Florianopolis (SC)',
+                                     'destination_Sao_Paulo (SP)',
+                                     'destination_Salvador (BH)',
+                                     'destination_Brasilia (DF)',
+                                     'destination_Rio_de_Janeiro (RJ)',
+                                     'destination_Campo_Grande (MS)',
+                                     'destination_Aracaju (SE)',
+                                     'destination_Natal (RN)',
+                                     'destination_Recife (PE)']
 
-        selected_flight_class = 'flightType_' + selected_flight_class
-        class_list = ['flightType_economic',
-                      'flightType_firstClass',
-                      'flightType_premium']
+            selected_flight_class = 'flightType_' + selected_flight_class
+            class_list = ['flightType_economic',
+                          'flightType_firstClass',
+                          'flightType_premium']
 
-        selected_agency = 'agency_' + selected_agency
-        agency_list = ['agency_Rainbow',
-                       'agency_CloudFy',
-                       'agency_FlyingDrops']
+            selected_agency = 'agency_' + selected_agency
+            agency_list = ['agency_Rainbow',
+                           'agency_CloudFy',
+                           'agency_FlyingDrops']
 
-        travel_dict = dict()
+            travel_dict = dict()
 
-        for city in boarding_city_list:
-            if city[:-5] != boarding:
-                travel_dict[city] = 0
-            else:
-                travel_dict[city] = 1
-        for city in destination_city_list:
-            if city[:-5] != destination:
-                travel_dict[city] = 0
-            else:
-                travel_dict[city] = 1
-        for flight_class in class_list:
-            if flight_class != selected_flight_class:
-                travel_dict[flight_class] = 0
-            else:
-                travel_dict[selected_flight_class] = 1
-        for agency in agency_list:
-            if agency != selected_agency:
-                travel_dict[agency] = 0
-            else:
-                travel_dict[selected_agency] = 1
-        travel_dict['week_no'] = week_no
-        travel_dict['week_day'] = week_day
-        travel_dict['day'] = day
+            for city in boarding_city_list:
+                travel_dict[city] = 1 if city[:-5] == boarding else 0
+            for city in destination_city_list:
+                travel_dict[city] = 1 if city[:-5] == destination else 0
+            for flight_class in class_list:
+                travel_dict[flight_class] = 1 if flight_class == selected_flight_class else 0
+            for agency in agency_list:
+                travel_dict[agency] = 1 if agency == selected_agency else 0
 
-        # Use loaded models from load_models()
-        if scaler_model is None or rf_model is None:
-            load_models()
+            travel_dict['week_no'] = week_no
+            travel_dict['week_day'] = week_day
+            travel_dict['day'] = day
 
-        predicted_price = str(round(predict_price(travel_dict, rf_model, scaler_model), 2))
+            # Use loaded models from load_models()
+            if scaler_model is None or rf_model is None:
+                load_models()
 
-        return jsonify({'prediction': predicted_price})
+            predicted_price = str(round(predict_price(travel_dict, rf_model, scaler_model), 2))
+            return jsonify({'prediction': predicted_price})
+        except Exception as exc:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': str(exc)}), 500
 
 
 if __name__ == '__main__':
