@@ -44,7 +44,7 @@ pipeline {
     
     post {
         always {
-            // Send notifications or cleanup actions
+            echo 'Pipeline completed'
         }
     }
 }
