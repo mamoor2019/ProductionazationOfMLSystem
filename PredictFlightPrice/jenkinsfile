@@ -12,15 +12,28 @@ pipeline {
         stage('Build') {
             steps {
                 // Install dependencies and run unit tests
-                sh 'pip install -r requirements.txt'
-                sh 'pytest'
+                script {
+                    if (isUnix()) {
+                        sh 'pip install -r requirements.txt'
+                        sh 'pytest'
+                    } else {
+                        bat 'pip install -r requirements.txt'
+                        bat 'pytest'
+                    }
+                }
             }
         }
 
         stage('Docker Build') {
             steps {
                 // Build Docker image
-                sh 'docker build -t mamoor/flight-price-pred .'
+                script {
+                    if (isUnix()) {
+                        sh 'docker build -t mamoor/flight-price-pred .'
+                    } else {
+                        bat 'docker build -t mamoor/flight-price-pred .'
+                    }
+                }
             }
         }
 
@@ -28,8 +41,15 @@ pipeline {
             steps {
                 // Push Docker image to DockerHub
                 withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_PASSWORD')]) {
-                    sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
-                    sh 'docker push mamoor/flight-price-pred'
+                    script {
+                        if (isUnix()) {
+                            sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
+                            sh 'docker push mamoor/flight-price-pred'
+                        } else {
+                            bat 'docker login -u yourusername -p %DOCKERHUB_PASSWORD%'
+                            bat 'docker push mamoor/flight-price-pred'
+                        }
+                    }
                 }
             }
         }
@@ -37,7 +57,13 @@ pipeline {
         stage('Deploy') {
             steps {
                 // Deploy to Kubernetes or any server
-                sh 'kubectl apply -f deployment.yml'
+                script {
+                    if (isUnix()) {
+                        sh 'kubectl apply -f deployment.yml'
+                    } else {
+                        bat 'kubectl apply -f deployment.yml'
+                    }
+                }
             }
         }
     }
