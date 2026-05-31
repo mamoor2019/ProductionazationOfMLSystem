@@ -4,8 +4,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Clone the Git repository
-                git 'https://github.com/mamoor2019/ProductionazationOfMLSystem.git'
+                // Clone the Git repository from the main branch
+                git branch: 'main', url: 'https://github.com/mamoor2019/ProductionazationOfMLSystem.git'
             }
         }
 
