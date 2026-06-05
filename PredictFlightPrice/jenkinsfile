@@ -31,10 +31,20 @@ pipeline {
                 // Build Docker image
                 script {
                     dir('PredictFlightPrice') {
+                        def dockerAvailable
                         if (isUnix()) {
-                            sh 'docker build -t mamoor/flight-price-pred .'
+                            dockerAvailable = sh(script: 'docker version >/dev/null 2>&1', returnStatus: true) == 0
                         } else {
-                            bat 'docker build -t mamoor/flight-price-pred .'
+                            dockerAvailable = bat(script: 'docker version >nul 2>&1', returnStatus: true) == 0
+                        }
+                        if (!dockerAvailable) {
+                            echo 'Docker not available or daemon not running; skipping Docker Build.'
+                        } else {
+                            if (isUnix()) {
+                                sh 'docker build -t mamoor/flight-price-pred .'
+                            } else {
+                                bat 'docker build -t mamoor/flight-price-pred .'
+                            }
                         }
                     }
                 }
@@ -47,12 +57,22 @@ pipeline {
                 withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_PASSWORD')]) {
                     script {
                         dir('PredictFlightPrice') {
+                            def dockerAvailable
                             if (isUnix()) {
-                                sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
-                                sh 'docker push mamoor/flight-price-pred'
+                                dockerAvailable = sh(script: 'docker version >/dev/null 2>&1', returnStatus: true) == 0
                             } else {
-                                bat 'docker login -u yourusername -p %DOCKERHUB_PASSWORD%'
-                                bat 'docker push mamoor/flight-price-pred'
+                                dockerAvailable = bat(script: 'docker version >nul 2>&1', returnStatus: true) == 0
+                            }
+                            if (!dockerAvailable) {
+                                echo 'Docker not available or daemon not running; skipping Docker Push.'
+                            } else {
+                                if (isUnix()) {
+                                    sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
+                                    sh 'docker push mamoor/flight-price-pred'
+                                } else {
+                                    bat 'docker login -u yourusername -p %DOCKERHUB_PASSWORD%'
+                                    bat 'docker push mamoor/flight-price-pred'
+                                }
                             }
                         }
                     }
@@ -65,10 +85,20 @@ pipeline {
                 // Deploy to Kubernetes or any server
                 script {
                     dir('PredictFlightPrice') {
+                        def kubectlAvailable
                         if (isUnix()) {
-                            sh 'kubectl apply -f deployment.yml'
+                            kubectlAvailable = sh(script: 'kubectl version --client >/dev/null 2>&1', returnStatus: true) == 0
                         } else {
-                            bat 'kubectl apply -f deployment.yml'
+                            kubectlAvailable = bat(script: 'kubectl version --client >nul 2>&1', returnStatus: true) == 0
+                        }
+                        if (!kubectlAvailable) {
+                            echo 'kubectl not available; skipping Deploy.'
+                        } else {
+                            if (isUnix()) {
+                                sh 'kubectl apply -f deployment.yml'
+                            } else {
+                                bat 'kubectl apply -f deployment.yml'
+                            }
                         }
                     }
                 }
