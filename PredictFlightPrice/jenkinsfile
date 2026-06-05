@@ -13,12 +13,14 @@ pipeline {
             steps {
                 // Install dependencies and run unit tests
                 script {
-                    if (isUnix()) {
-                        sh 'pip install -r requirements.txt'
-                        sh 'pytest'
-                    } else {
-                        bat 'pip install -r requirements.txt'
-                        bat 'pytest'
+                    dir('PredictFlightPrice') {
+                        if (isUnix()) {
+                            sh 'pip install -r requirements.txt'
+                            sh 'pytest'
+                        } else {
+                            bat 'pip install -r requirements.txt'
+                            bat 'pytest'
+                        }
                     }
                 }
             }
@@ -28,10 +30,12 @@ pipeline {
             steps {
                 // Build Docker image
                 script {
-                    if (isUnix()) {
-                        sh 'docker build -t mamoor/flight-price-pred .'
-                    } else {
-                        bat 'docker build -t mamoor/flight-price-pred .'
+                    dir('PredictFlightPrice') {
+                        if (isUnix()) {
+                            sh 'docker build -t mamoor/flight-price-pred .'
+                        } else {
+                            bat 'docker build -t mamoor/flight-price-pred .'
+                        }
                     }
                 }
             }
@@ -42,12 +46,14 @@ pipeline {
                 // Push Docker image to DockerHub
                 withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_PASSWORD')]) {
                     script {
-                        if (isUnix()) {
-                            sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
-                            sh 'docker push mamoor/flight-price-pred'
-                        } else {
-                            bat 'docker login -u yourusername -p %DOCKERHUB_PASSWORD%'
-                            bat 'docker push mamoor/flight-price-pred'
+                        dir('PredictFlightPrice') {
+                            if (isUnix()) {
+                                sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
+                                sh 'docker push mamoor/flight-price-pred'
+                            } else {
+                                bat 'docker login -u yourusername -p %DOCKERHUB_PASSWORD%'
+                                bat 'docker push mamoor/flight-price-pred'
+                            }
                         }
                     }
                 }
@@ -58,10 +64,12 @@ pipeline {
             steps {
                 // Deploy to Kubernetes or any server
                 script {
-                    if (isUnix()) {
-                        sh 'kubectl apply -f deployment.yml'
-                    } else {
-                        bat 'kubectl apply -f deployment.yml'
+                    dir('PredictFlightPrice') {
+                        if (isUnix()) {
+                            sh 'kubectl apply -f deployment.yml'
+                        } else {
+                            bat 'kubectl apply -f deployment.yml'
+                        }
                     }
                 }
             }
