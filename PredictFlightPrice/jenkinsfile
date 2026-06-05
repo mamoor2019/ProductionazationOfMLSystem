@@ -15,11 +15,11 @@ pipeline {
                 script {
                     dir('PredictFlightPrice') {
                         if (isUnix()) {
-                            sh 'pip install -r requirements.txt'
-                            sh 'pytest'
+                            sh 'python3 -m pip install -r requirements.txt pytest'
+                            sh 'python3 -m pytest'
                         } else {
-                            bat 'pip install -r requirements.txt'
-                            bat 'pytest'
+                            bat 'python -m pip install -r requirements.txt pytest'
+                            bat 'python -m pytest'
                         }
                     }
                 }
