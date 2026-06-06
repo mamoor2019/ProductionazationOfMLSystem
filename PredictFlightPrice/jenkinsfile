@@ -54,18 +54,18 @@ pipeline {
         stage('Docker Push') {
             steps {
                 // Push Docker image to DockerHub
-                withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_PASSWORD')]) {
-                    script {
-                        dir('PredictFlightPrice') {
-                            def dockerAvailable
-                            if (isUnix()) {
-                                dockerAvailable = sh(script: 'docker version >/dev/null 2>&1', returnStatus: true) == 0
-                            } else {
-                                dockerAvailable = bat(script: 'docker version >nul 2>&1', returnStatus: true) == 0
-                            }
-                            if (!dockerAvailable) {
-                                echo 'Docker not available or daemon not running; skipping Docker Push.'
-                            } else {
+                script {
+                    dir('PredictFlightPrice') {
+                        def dockerAvailable
+                        if (isUnix()) {
+                            dockerAvailable = sh(script: 'docker version >/dev/null 2>&1', returnStatus: true) == 0
+                        } else {
+                            dockerAvailable = bat(script: 'docker version >nul 2>&1', returnStatus: true) == 0
+                        }
+                        if (!dockerAvailable) {
+                            echo 'Docker not available or daemon not running; skipping Docker Push.'
+                        } else {
+                            withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_PASSWORD')]) {
                                 if (isUnix()) {
                                     sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
                                     sh 'docker push mamoor/flight-price-pred'
