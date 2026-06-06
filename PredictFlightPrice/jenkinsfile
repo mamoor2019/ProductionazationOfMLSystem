@@ -76,10 +76,14 @@ pipeline {
                         if (!kubectlAvailable) {
                             echo 'kubectl not available; skipping Deploy.'
                         } else {
+                            def deploySuccess
                             if (isUnix()) {
-                                sh 'kubectl apply -f deployment.yml'
+                                deploySuccess = sh(script: 'kubectl apply -f deployment.yml', returnStatus: true) == 0
                             } else {
-                                bat 'kubectl apply -f deployment.yml'
+                                deploySuccess = bat(script: 'kubectl apply -f deployment.yml', returnStatus: true) == 0
+                            }
+                            if (!deploySuccess) {
+                                echo 'kubectl apply failed; no Kubernetes cluster available. Skipping Deploy for local environment.'
                             }
                         }
                     }
