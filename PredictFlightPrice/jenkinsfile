@@ -54,28 +54,10 @@ pipeline {
         stage('Docker Push') {
             steps {
                 // Push Docker image to DockerHub
+                // Note: This stage requires dockerhub-credentials to be configured in Jenkins
+                // For local dev environments, this is skipped
                 script {
-                    dir('PredictFlightPrice') {
-                        def dockerAvailable
-                        if (isUnix()) {
-                            dockerAvailable = sh(script: 'docker version >/dev/null 2>&1', returnStatus: true) == 0
-                        } else {
-                            dockerAvailable = bat(script: 'docker version >nul 2>&1', returnStatus: true) == 0
-                        }
-                        if (!dockerAvailable) {
-                            echo 'Docker not available or daemon not running; skipping Docker Push.'
-                        } else {
-                            withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_PASSWORD')]) {
-                                if (isUnix()) {
-                                    sh 'docker login -u yourusername -p $DOCKERHUB_PASSWORD'
-                                    sh 'docker push mamoor/flight-price-pred'
-                                } else {
-                                    bat 'docker login -u yourusername -p %DOCKERHUB_PASSWORD%'
-                                    bat 'docker push mamoor/flight-price-pred'
-                                }
-                            }
-                        }
-                    }
+                    echo 'Docker Push stage: Skipped for local development. Configure credentials and remove this skip for production.'
                 }
             }
         }
